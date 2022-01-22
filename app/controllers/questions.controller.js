@@ -1,4 +1,6 @@
 const Quetions = require('../../models/questions')
+// const Token = require('../../models/token')
+// const _ = require('lodash');
 
 // Create and Save a new Customer
 exports.create = (req, res) => {
@@ -67,3 +69,28 @@ exports.delete = (req, res) => {
       })
     })
 }
+
+// exports.updateAnswerVotes = async(req, res) => {
+//   console.log("updateAnswerVotes");
+//   for(const answer of req.body.answer) {
+//     const doc = await Quetions.findById(answer.questionId);
+//     console.log("------doc------------",doc);
+//     _.each(doc.answerVal, i=>{
+//       console.log(answer.values, doc.title)
+//       if(doc.title === i.title)
+//       if(doc.title in answer.values) {
+//         if(req.body.walletAddr in i.votes){
+//           i.votes.push(req.body.walletAddr);
+//           console.log("\tinsert new votes address");
+//         }
+//       } else {
+//         _.pull(i.votes, req.body.walletAddr);
+//         console.log("\tremove new votes address");
+//       }
+//     })
+//     doc.save();
+//     console.log("=========== end save ==============", answer.questionId)
+//   }
+
+//   res.send(req.answer);
+// }

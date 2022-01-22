@@ -22,10 +22,7 @@ const schema = mongoose.Schema({
     type: String,
     default: ""
   },
-  tokenInfo: [{
-    tokenAddr: String,
-    tokenAccount: String,
-  }],
+  tokenInfo: [String],
   isAdmin: {
     type: Boolean,
     default: false,
@@ -36,7 +33,8 @@ const schema = mongoose.Schema({
       questionId: Schema.Types.ObjectId,
       values: [String]
     }
-  ]
+  ],
+  votes: Number
     
 });
 

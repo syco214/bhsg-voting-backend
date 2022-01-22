@@ -1,5 +1,8 @@
 const token = require('../../models/token')
 const Token = token
+const Quetions = require('../../models/questions')
+const _ = require('lodash');
+var mongoose = require('mongoose');
 
 // Create and Save a new Customer
 exports.createOrFindOne = (req, res) => {
@@ -12,7 +15,7 @@ exports.createOrFindOne = (req, res) => {
 
   // Create a Customer
 
-  console.log("body",req.body.walletAddr)
+  console.log("body",req.body.tokenInfo)
   Token.findOne({ walletAddr: req.body.walletAddr })
     .then(async(data) => {
       console.log("data",data)
@@ -24,7 +27,7 @@ exports.createOrFindOne = (req, res) => {
         const customer = new Token({
           email: req.body.email,
           walletAddr: req.body.walletAddr,
-          tokenInfo: req.body.tokenInfo ? JSON.parse(req.body.tokenInfo) : [],
+          tokenInfo: req.body.tokenInfo ? req.body.tokenInfo : [],
           tokenCount: req.body.tokenCount,
           defaultTokenAddress: req.body.defaultTokenAddress,
           // url: "bountyhunter-"+(count+1)
@@ -54,23 +57,65 @@ exports.createOrFindOne = (req, res) => {
     })
 }
 
-exports.updateAnswer = (req, res) => {
+exports.getVotes = async(req, res) => {
+  console.log("getVotes");
+  const quests = await Quetions.find({}, "answerVal");
+  const list = [];
+  _.each(quests, i=>{
+    _.each(i.answerVal, val=>{
+      const tmp = {id: val._id, votes: 0}
+      list.push(tmp);
+    })
+  })
+  const answer = await Token.find({"answer.0": { "$exists" : true }, "tokenInfo.0": {"$exists" : true}}, "answer tokenInfo" );
+  _.each(answer, i=>{
+    const nfts = i.tokenInfo.length;
+    _.each(i.answer, each=>{
+      
+      _.each(each.values, val=>{
+        let index = _.findIndex(list, {id: mongoose.Types.ObjectId(val)});
+        if(index === -1) return;
+        list[index]["votes"] += nfts;
+      })
+      // voteObj.votes += nfts;
+    })
+  })
+  // console.log("----answer----",answer);
+  console.log("++++++VoteList+++++++", req.answer);
+  // _.set(req.answer, "voteList", list);
+  res.status(200).send({answers: req.answer, voteList: list});
+}
+
+exports.updateAnswer = (req, res, next) => {
   console.log("updateAnswer", req.body)
   Token.findOneAndUpdate({walletAddr: req.body.walletAddr}, {answer: req.body.answer},{new: true, upsert: true}).then(data=>{
     console.log("res",data)
-    res.status(200)
+    // res.status(200).send(data);
+    // this.getVotes();
+    req.answer = data;
+    next();
   }).catch(
     e=>{
       console.log(e)
-      res.status(500)
+      res.status(500).send({
+        message:
+          err.message || 'Some error occurred while creating the Tutorial.',
+      })
     })
 }
 
-exports.getAnswerByWalletAddr = (req, res) => {
+exports.getAnswerByWalletAddr = (req, res, next) => {
   console.log("getAnswerByWalletAddr", req.params.id)
   Token.findOne({walletAddr: req.params.id}).then(data=>{
     console.log("res",data)
-    res.send(data.answer)
+    // res.status(200).send(data)
+    req.answer = data;
+    next();
+  }).catch(e=>{
+    res.status(500).send({
+      message:
+        err.message || 'Some error occurred while creating the Tutorial.',
+    })
   })
 }
 
