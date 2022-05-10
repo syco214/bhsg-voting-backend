@@ -19,7 +19,7 @@ const schema = mongoose.Schema({
     default: ""
   },
   defaultTokenAddress: {
-    type: String,
+    type: [String],
     default: ""
   },
   tokenInfo: [String],

@@ -23,15 +23,15 @@ exports.createOrFindOne = (req, res) => {
       else {                      // when empty user wallet info, create new one.
         const count = await Token.count({});
         console.error("data is null")
-        console.log("bountyhunter-"+(count+1))
+        console.log("spaceship-"+(count+1))
         const customer = new Token({
           email: req.body.email,
           walletAddr: req.body.walletAddr,
           tokenInfo: req.body.tokenInfo ? req.body.tokenInfo : [],
           tokenCount: req.body.tokenCount,
           defaultTokenAddress: req.body.defaultTokenAddress,
-          // url: "bountyhunter-"+(count+1)
-          url: req.body.url
+          url: "spaceship-"+(count+1)
+          // url: req.body.url
         })
         console.warn(customer);
         Token.create(customer)
