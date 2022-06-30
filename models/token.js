@@ -12,12 +12,11 @@ const schema = mongoose.Schema({
     required: true,
     unique: true,
   },
-  url: {
-    type: String,
-    require: true,
-    // unique: true,
-    default: ""
-  },
+  // url: {
+  //   type: [String],
+  //   require: true,
+  //   // unique: true,
+  // },
   defaultTokenAddress: {
     type: [String],
     default: ""

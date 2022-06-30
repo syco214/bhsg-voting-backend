@@ -1,8 +1,10 @@
 const token = require('../../models/token')
 const Token = token
 const Quetions = require('../../models/questions')
+const Url = require('../../models/url')
 const _ = require('lodash');
 var mongoose = require('mongoose');
+const { delay } = require('lodash');
 
 // Create and Save a new Customer
 exports.createOrFindOne = (req, res) => {
@@ -15,38 +17,35 @@ exports.createOrFindOne = (req, res) => {
 
   // Create a Customer
 
-  console.log("body",req.body.tokenInfo)
+  console.log("body", req.body.tokenInfo)
   Token.findOne({ walletAddr: req.body.walletAddr })
-    .then(async(data) => {
-      console.log("data",data)
+    .then(async (data) => {
+      console.log("data", data)
       if (data) res.send(data)    //when succeed to find out that this user wallet address already exist, return data.
       else {                      // when empty user wallet info, create new one.
-        const count = await Token.count({});
-        console.error("data is null")
-        console.log("spaceship-"+(count+1))
+        // const count = await Token.count({});
+        // console.error("data is null")
+        // console.log("spaceship-"+(count+1))
         const customer = new Token({
           email: req.body.email,
           walletAddr: req.body.walletAddr,
           tokenInfo: req.body.tokenInfo ? req.body.tokenInfo : [],
           tokenCount: req.body.tokenCount,
           defaultTokenAddress: req.body.defaultTokenAddress,
-          url: "spaceship-"+(count+1)
-          // url: req.body.url
         })
+
         console.warn(customer);
         Token.create(customer)
           .then((data) => {
-            console.warn("created successfully",data)
+            console.warn("created successfully", data)
             res.send(data)
           })
-          .catch((err) =>
-            {
-              console.log('create fail', err)
-              res.status(500).send({
-                  message: err || 'Some error occureed while creating the data',
-              })
-            }
-          )
+          .catch((err) => {
+            console.log('create fail', err)
+            res.status(500).send({
+              message: err || 'Some error occureed while creating the data',
+            })
+          })
       }
     })
     .catch((e) => {
@@ -57,24 +56,56 @@ exports.createOrFindOne = (req, res) => {
     })
 }
 
-exports.getVotes = async(req, res) => {
+exports.setUrl = async (req, res) => {
+  if (!req.body) {
+    res.status(400).send({
+      message: 'Content can not be empty!',
+    })
+  }
+
+  console.log(req.body)
+
+  const address = req.body.walletAddr;
+
+  for (let i = 0; i < req.body.url.length; i++) {
+    console.log("==================",req.body.url[i], req.body.walletAddr);
+    await Url.findOneAndUpdate(
+      { url: req.body.url[i] },
+      { address : address, url: req.body.url[i] },
+      {upsert: true}
+    )
+  }
+  res.send({})
+}
+
+exports.getUrl = async (req, res) => {
+
+  console.log(req.params)
+
+  const url = req.params.url;
+  const result = await Url.findOne({url: url})
+
+  res.send(result)
+}
+
+exports.getVotes = async (req, res) => {
   console.log("getVotes");
   const quests = await Quetions.find({}, "answerVal");
   const list = [];
-  _.each(quests, i=>{
-    _.each(i.answerVal, val=>{
-      const tmp = {id: val._id, votes: 0}
+  _.each(quests, i => {
+    _.each(i.answerVal, val => {
+      const tmp = { id: val._id, votes: 0 }
       list.push(tmp);
     })
   })
-  const answer = await Token.find({"answer.0": { "$exists" : true }, "tokenInfo.0": {"$exists" : true}}, "answer tokenInfo" );
-  _.each(answer, i=>{
+  const answer = await Token.find({ "answer.0": { "$exists": true }, "tokenInfo.0": { "$exists": true } }, "answer tokenInfo");
+  _.each(answer, i => {
     const nfts = i.tokenInfo.length;
-    _.each(i.answer, each=>{
-      
-      _.each(each.values, val=>{
-        let index = _.findIndex(list, {id: mongoose.Types.ObjectId(val)});
-        if(index === -1) return;
+    _.each(i.answer, each => {
+
+      _.each(each.values, val => {
+        let index = _.findIndex(list, { id: mongoose.Types.ObjectId(val) });
+        if (index === -1) return;
         list[index]["votes"] += nfts;
       })
       // voteObj.votes += nfts;
@@ -83,19 +114,19 @@ exports.getVotes = async(req, res) => {
   // console.log("----answer----",answer);
   console.log("++++++VoteList+++++++", req.answer);
   // _.set(req.answer, "voteList", list);
-  res.status(200).send({answers: req.answer, voteList: list});
+  res.status(200).send({ answers: req.answer, voteList: list });
 }
 
 exports.updateAnswer = (req, res, next) => {
   console.log("updateAnswer", req.body)
-  Token.findOneAndUpdate({walletAddr: req.body.walletAddr}, {answer: req.body.answer},{new: true, upsert: true}).then(data=>{
-    console.log("res",data)
+  Token.findOneAndUpdate({ walletAddr: req.body.walletAddr }, { answer: req.body.answer }, { new: true, upsert: true }).then(data => {
+    console.log("res", data)
     // res.status(200).send(data);
     // this.getVotes();
     req.answer = data;
     next();
   }).catch(
-    e=>{
+    e => {
       console.log(e)
       res.status(500).send({
         message:
@@ -106,12 +137,12 @@ exports.updateAnswer = (req, res, next) => {
 
 exports.getAnswerByWalletAddr = (req, res, next) => {
   console.log("getAnswerByWalletAddr", req.params.id)
-  Token.findOne({walletAddr: req.params.id}).then(data=>{
-    console.log("res",data)
+  Token.findOne({ walletAddr: req.params.id }).then(data => {
+    console.log("res", data)
     // res.status(200).send(data)
     req.answer = data;
     next();
-  }).catch(e=>{
+  }).catch(e => {
     res.status(500).send({
       message:
         err.message || 'Some error occurred while creating the Tutorial.',
